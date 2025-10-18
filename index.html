@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Escanear y Generar 40 QR</title>
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(180deg, #0f172a, #1e293b);
+      color: white;
+      text-align: center;
+      padding: 10px;
+    }
+    h1 {
+      font-size: 1.3rem;
+      margin-bottom: 5px;
+    }
+    #reader {
+      width: 250px;
+      margin: 10px auto;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    input, button {
+      padding: 10px;
+      border-radius: 10px;
+      border: none;
+      margin: 5px;
+      font-size: 1rem;
+    }
+    input {
+      width: 80%;
+    }
+    button {
+      background: #6366f1;
+      color: white;
+      cursor: pointer;
+    }
+    button:active {
+      transform: scale(0.97);
+    }
+    .qr {
+      margin: 15px auto;
+      background: snow;
+      border-radius: 12px;
+      padding: 10px;
+      width: fit-content;
+    }
+    .qr-number {
+      font-weight: bold;
+      color: #a78bfa;
+      margin-bottom: 5px;
+    }
+    .qr-code {
+      margin: auto;
+    }
+    .code-text {
+      font-size: 0.8rem;
+      margin-top: 5px;
+      color: black;
+      word-break: break-all;
+    }
+  </style>
+</head>
+<body>
+  <h1>📷 Escanear o escribir código</h1>
+  <div id="reader"></div>
+  <input type="text" id="codigoBase" placeholder="O escribe tu código aquí">
+  <br>
+  <button id="btnGenerar">Generar 40 QR</button>
+  <button id="btnCamara">Activar Cámara</button>
+
+  <div id="output"></div>
+
+  <script>
+    const codigoBase = document.getElementById("codigoBase");
+    const output = document.getElementById("output");
+    const btnGenerar = document.getElementById("btnGenerar");
+    const btnCamara = document.getElementById("btnCamara");
+    const btnDetener = document.getElementById("btnDetener");
+
+    let qrScanner = null;
+
+    function generarQRs(base) {
+      output.innerHTML = "";
+      if (!base) return alert("Escanea o escribe un código primero");
+
+      for (let i = 1; i <= 40; i++) {
+        const numero = i.toString().padStart(2, "0");
+        const nuevoCodigo = base.slice(0, -2) + numero;
+
+        const div = document.createElement("div");
+        div.className = "qr";
+
+        const num = document.createElement("div");
+        num.className = "qr-number";
+        num.textContent = `#${numero}`;
+        div.appendChild(num);
+
+        const qrDiv = document.createElement("div");
+        qrDiv.className = "qr-code";
+        new QRCode(qrDiv, { text: nuevoCodigo, width: 200, height: 200 });
+        div.appendChild(qrDiv);
+
+        const codeText = document.createElement("div");
+        codeText.className = "code-text";
+        codeText.textContent = nuevoCodigo;
+        div.appendChild(codeText);
+
+        output.appendChild(div);
+      }
+    }
+
+    btnGenerar.onclick = () => {
+      generarQRs(codigoBase.value.trim());
+    };
+
+    btnCamara.onclick = async () => {
+      if (qrScanner) return;
+      qrScanner = new Html5Qrcode("reader");
+      try {
+        await qrScanner.start(
+          { facingMode: "environment" },
+          { fps: 10, qrbox: { width: 200, height: 200 } },
+          decodedText => {
+            codigoBase.value = decodedText;
+            alert("Código detectado: " + decodedText);
+            generarQRs(decodedText);
+            detenerCamara();
+          }
+        );
+      } catch (err) {
+        alert("Error al iniciar cámara: " + err);
+      }
+    };
+
+    function detenerCamara() {
+      if (qrScanner) {
+        qrScanner.stop().then(() => {
+          qrScanner.clear();
+          qrScanner = null;
+        });
+      }
+    }
+
+    btnDetener.onclick = detenerCamara;
+  </script>
+</body>
+</html>
